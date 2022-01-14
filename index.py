@@ -3,13 +3,17 @@ import datetime
 import cbpro
 import os
 
+def getProductLastPrice(pubc: cbpro.PublicClient, productID):
+    stat24 = pubc.get_product_24hr_stats(productID)
+    return stat24['last']
+
 def handler(event, context):
 
     c = cbpro.PublicClient()
-    [(date, open_price, max_price, min_price, close_price, capitalization)] = c.get_product_historic_rates(product_id='BTC-EUR', start="2022-01-10T12:00:00",end="2022-01-10T12:10:00",granularity=3600)
+    last_price = getProductLastPrice(c, "BTC-EUR")
 
     data = {
-        'BTC_EUR' : close_price,
+        'BTC_EUR' : last_price,
         'TABLE_NAME' : os.environ['TABLE_NAME']
     }
 
