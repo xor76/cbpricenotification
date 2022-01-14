@@ -34,17 +34,20 @@ Resources:
         Fn::GetAtt:
         - LambdaExecutionRole
         - Arn
+      Environment:
+        Variables:
+          TABLE_NAME: !Ref DynamoDBTable 
       Events:
-        GetEvent:
-          Type: Api
+        Timer:
+          Type: Schedule
           Properties:
-            Path: /
-            Method: get
-        PostEvent:
-          Type: Api
-          Properties:
-            Path: /
-            Method: post
+            Schedule: rate(5 minutes)
+      Policies:
+        - DynamoDBCrudPolicy:
+          TableName: !Ref DynamoDBTable
+      Layers:
+        - !Sub "arn:aws:lambda:us-east-2:445943932131:layer:coinbase-pro-layer:1"
+
   LambdaExecutionRole:
     Description: Creating service role in IAM for AWS Lambda
     Type: AWS::IAM::Role
@@ -60,3 +63,24 @@ Resources:
       ManagedPolicyArns:
         - !Sub 'arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole'
       PermissionsBoundary: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:policy/CodeStar_${ProjectId}_PermissionsBoundary'
+
+  DynamoDBTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        -
+          AttributeName: CoinId
+          AttributeType: S
+        -
+          AttributeName: TimeStamp
+          AttributeType: N
+      KeySchema:
+        -
+          AttributeName: CoinId
+          KeyType: HASH
+        -
+          AttributeName: TimeStamp
+          KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
